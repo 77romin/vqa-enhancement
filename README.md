@@ -1,7 +1,7 @@
-# SSAFY VQA 성능 개선 분석
+# VQA 성능 개선 분석
 
 > Kaggle baseline **0.70837** → 개선 모델 **0.95829**  
-> 발표자료 제작용 Markdown · 분석 대상: `(260908)_baseline_colab.ipynb`, `SSAFY_VQA_A100_Competition.ipynb`
+> 발표자료 제작용 Markdown · 분석 대상: `(260908)_baseline_colab.ipynb`, `enhanced_baseline_colab.ipynb`
 
 ---
 
@@ -31,12 +31,12 @@
 
 ## 2. 점수 변화
 
-| 지표 | 기존 baseline | 개선 SSAFY | 변화 |
-|---|---:|---:|---:|
-| Kaggle score / accuracy | 0.70837 | 0.95829 | **+0.24992** |
-| 백분율 환산 | 70.837% | 95.829% | **+24.992%p** |
-| 오류율 | 29.163% | 4.171% | **−24.992%p** |
-| 기존 오류 대비 감소율 | — | — | **85.70%** |
+| 지표                    | 기존 baseline | 개선 baseline |          변화 |
+| ----------------------- | ------------: | ------------: | ------------: |
+| Kaggle score / accuracy |       0.70837 |       0.95829 |  **+0.24992** |
+| 백분율 환산             |       70.837% |       95.829% | **+24.992%p** |
+| 오류율                  |       29.163% |        4.171% | **−24.992%p** |
+| 기존 오류 대비 감소율   |             — |             — |    **85.70%** |
 
 > 발표 메시지: “정확도가 약 25%p 올랐고, 틀리던 문제의 약 86%를 추가로 해결했다.”
 
@@ -44,26 +44,26 @@
 
 ## 3. 전체 비교표
 
-| 영역 | 기존 baseline | 개선 SSAFY | 기대 효과 |
-|---|---|---|---|
-| 데이터 사용 | train에서 무작위 **200개만 사용** | 전체 train을 감사 후 train/valid로 분할 | 데이터 다양성·일반화 향상 |
-| dev 활용 | 로드하지 않음 | 5개 응답을 다수결 label로 만들고 별도 진단 | 모델 선택 근거 강화 |
-| 데이터 검증 | 사실상 없음 | 열·ID·결측·이미지 누락·제출 순서 검사 | 조용한 데이터 오류 방지 |
-| 중복 처리 | 일반 random split | SHA-256 + pHash 군집, image group-safe split | validation 누수 억제 |
-| base model | Qwen2.5-VL-3B-Instruct | Qwen3.5-9B | 시각·언어 추론 용량 확대 |
-| 정밀도 | 4-bit NF4 QLoRA, FP16 compute 설정 | BF16 base + LoRA | 양자화 손실 감소, A100 활용 |
-| 이미지 입력 | `min=max=384×384` | 256~768 image token 범위 | 작은 글자/OCR 정보 보존 |
-| LoRA | rank 8, attention+MLP | rank 16, text attention 계열, vision freeze 검사 | 적응 용량 확대·학습 범위 통제 |
-| 학습 label | `labels = input_ids.clone()` | prompt/padding mask 후 assistant target만 활성 | 학습 목표를 정답 선택에 정렬 |
-| 선택지 순서 | 항상 a→b→c→d | 학습 시 무작위 permutation | 위치 편향 완화 |
-| 유효 batch | 1×4 = 4 | 2×8 = 16 | gradient 안정성 향상 |
-| optimizer 전략 | LR 1e-4, linear schedule | LR 5e-5, cosine, warmup, grad clipping | 안정적 미세조정 |
-| validation | 20개의 잘못 마스킹된 loss | group-safe split의 accuracy + 전체 dev 진단 | 실제 metric과 정렬 |
-| 추론 | 최대 2 token 자유 생성 후 문자열 파싱 | a/b/c/d 각각의 조건부 log-probability 비교 | 파싱 실패·생성 변동 제거 |
-| 위치 편향 보정 | 없음 | cyclic permutation score 평균 | 특정 글자 위치 선호 감소 |
-| 장애 대응 | 중간 저장·재개 없음 | checkpoint, smoke test, 추론 재개, atomic CSV | 장시간 작업의 실패 비용 감소 |
-| 제출 생성 | 새 DataFrame을 직접 저장 | sample schema·ID 순서·중복·답 범위 검증 | 형식 오류 방지 |
-| 재현성 | seed만 일부 고정 | split 파일/hash, config, model SHA 기록 시도 | 실험 추적성 향상 |
+| 영역           | 기존 baseline                         | 개선 baseline                                    | 기대 효과                     |
+| -------------- | ------------------------------------- | ------------------------------------------------ | ----------------------------- |
+| 데이터 사용    | train에서 무작위 **200개만 사용**     | 전체 train을 감사 후 train/valid로 분할          | 데이터 다양성·일반화 향상     |
+| dev 활용       | 로드하지 않음                         | 5개 응답을 다수결 label로 만들고 별도 진단       | 모델 선택 근거 강화           |
+| 데이터 검증    | 사실상 없음                           | 열·ID·결측·이미지 누락·제출 순서 검사            | 조용한 데이터 오류 방지       |
+| 중복 처리      | 일반 random split                     | SHA-256 + pHash 군집, image group-safe split     | validation 누수 억제          |
+| base model     | Qwen2.5-VL-3B-Instruct                | Qwen3.5-9B                                       | 시각·언어 추론 용량 확대      |
+| 정밀도         | 4-bit NF4 QLoRA, FP16 compute 설정    | BF16 base + LoRA                                 | 양자화 손실 감소, A100 활용   |
+| 이미지 입력    | `min=max=384×384`                     | 256~768 image token 범위                         | 작은 글자/OCR 정보 보존       |
+| LoRA           | rank 8, attention+MLP                 | rank 16, text attention 계열, vision freeze 검사 | 적응 용량 확대·학습 범위 통제 |
+| 학습 label     | `labels = input_ids.clone()`          | prompt/padding mask 후 assistant target만 활성   | 학습 목표를 정답 선택에 정렬  |
+| 선택지 순서    | 항상 a→b→c→d                          | 학습 시 무작위 permutation                       | 위치 편향 완화                |
+| 유효 batch     | 1×4 = 4                               | 2×8 = 16                                         | gradient 안정성 향상          |
+| optimizer 전략 | LR 1e-4, linear schedule              | LR 5e-5, cosine, warmup, grad clipping           | 안정적 미세조정               |
+| validation     | 20개의 잘못 마스킹된 loss             | group-safe split의 accuracy + 전체 dev 진단      | 실제 metric과 정렬            |
+| 추론           | 최대 2 token 자유 생성 후 문자열 파싱 | a/b/c/d 각각의 조건부 log-probability 비교       | 파싱 실패·생성 변동 제거      |
+| 위치 편향 보정 | 없음                                  | cyclic permutation score 평균                    | 특정 글자 위치 선호 감소      |
+| 장애 대응      | 중간 저장·재개 없음                   | checkpoint, smoke test, 추론 재개, atomic CSV    | 장시간 작업의 실패 비용 감소  |
+| 제출 생성      | 새 DataFrame을 직접 저장              | sample schema·ID 순서·중복·답 범위 검증          | 형식 오류 방지                |
+| 재현성         | seed만 일부 고정                      | split 파일/hash, config, model SHA 기록 시도     | 실험 추적성 향상              |
 
 ---
 
@@ -180,13 +180,13 @@ tr_idx, va_idx = next(cv.split(train_df, train_df.answer, groups=train_groups))
 
 ### 5.3 모델 계층: 용량과 시각 정보 확대
 
-| 설정 | 기존 | 개선 |
-|---|---:|---:|
-| 모델 | Qwen2.5-VL-3B | Qwen3.5-9B |
-| base 정밀도 | 4-bit NF4 | BF16 |
-| LoRA rank / alpha | 8 / 16 | 16 / 32 |
-| 이미지 | 384×384 고정 | 256~768 image token |
-| 주요 자원 | T4 등 | A100 80GB 전제 |
+| 설정              |          기존 |                개선 |
+| ----------------- | ------------: | ------------------: |
+| 모델              | Qwen2.5-VL-3B |          Qwen3.5-9B |
+| base 정밀도       |     4-bit NF4 |                BF16 |
+| LoRA rank / alpha |        8 / 16 |             16 / 32 |
+| 이미지            |  384×384 고정 | 256~768 image token |
+| 주요 자원         |         T4 등 |      A100 80GB 전제 |
 
 모델의 parameter 규모는 명칭상 3B에서 9B로 약 3배가 되고, BF16 base를 사용해 4-bit 양자화에 따른 표현 손실을 줄인다. 이미지 token budget 확장은 작은 글자와 세부 물체에 특히 유리할 가능성이 높다.
 
@@ -310,17 +310,17 @@ prediction = LABELS[int(scores.argmax())]
 
 아래 순위는 코드 차이와 일반적인 VLM 학습 원리에 근거한 추정이며 ablation 결과가 아니다.
 
-| 우선순위 | 변경 | 기여 가능성 | 이유 |
-|---:|---|---|---|
-| 1 | 전체 train 사용 | 매우 높음 | 180개 학습 병목을 직접 제거 |
-| 2 | answer-target loss masking | 매우 높음 | 학습 objective를 accuracy와 정렬 |
-| 3 | 9B Qwen3.5 + BF16 | 매우 높음 | base의 시각·언어 추론 상한 확대 |
-| 4 | 768 image token | 높음 | OCR·작은 객체 정보 보존 |
-| 5 | conditional log-probability 추론 | 높음 | 생성·파싱 실패 제거, 4지선다 구조 활용 |
-| 6 | 선택지 permutation | 중간~높음 | 문자·위치 편향 완화 |
-| 7 | 안정적 optimizer와 큰 effective batch | 중간 | 9B LoRA 수렴 안정성 향상 |
-| 8 | group-safe validation | 간접적으로 높음 | 잘못된 모델 선택 방지 |
-| 9 | checkpoint·제출 검증 | 점수 직접 효과는 낮음 | 실패·누락·형식 오류 방지 |
+| 우선순위 | 변경                                  | 기여 가능성           | 이유                                   |
+| -------: | ------------------------------------- | --------------------- | -------------------------------------- |
+|        1 | 전체 train 사용                       | 매우 높음             | 180개 학습 병목을 직접 제거            |
+|        2 | answer-target loss masking            | 매우 높음             | 학습 objective를 accuracy와 정렬       |
+|        3 | 9B Qwen3.5 + BF16                     | 매우 높음             | base의 시각·언어 추론 상한 확대        |
+|        4 | 768 image token                       | 높음                  | OCR·작은 객체 정보 보존                |
+|        5 | conditional log-probability 추론      | 높음                  | 생성·파싱 실패 제거, 4지선다 구조 활용 |
+|        6 | 선택지 permutation                    | 중간~높음             | 문자·위치 편향 완화                    |
+|        7 | 안정적 optimizer와 큰 effective batch | 중간                  | 9B LoRA 수렴 안정성 향상               |
+|        8 | group-safe validation                 | 간접적으로 높음       | 잘못된 모델 선택 방지                  |
+|        9 | checkpoint·제출 검증                  | 점수 직접 효과는 낮음 | 실패·누락·형식 오류 방지               |
 
 ### 반드시 피해야 할 주장
 
@@ -388,15 +388,15 @@ for df in [train_df, dev_df, test_df, sample_df]:
 
 정확한 기여도를 밝히려면 동일 split에서 한 요소씩 바꾸는 ablation이 필요하다.
 
-| 실험 | 고정 조건 | 바꾸는 요소 | 확인 질문 |
-|---|---|---|---|
-| A | 3B, 200개, 기존 추론 | full loss → answer-target loss | loss masking만으로 얼마나 오르는가? |
-| B | 3B, answer-target loss | 200개 → 전체 train | 데이터 양의 효과는? |
-| C | 전체 train, 동일 추론 | 3B 4-bit → 9B BF16 | 모델/정밀도 효과는? |
-| D | 동일 model/adapter | generate → candidate score | 파싱 제거 효과는? |
-| E | 동일 설정 | image token 256/512/768/1024 | OCR 성능과 비용의 최적점은? |
-| F | 동일 설정 | permutation 1/2/4회 | 위치 편향 감소가 비용을 정당화하는가? |
-| G | seed 17/42/71 | 동일 hyperparameter | 개선이 seed에 안정적인가? |
+| 실험 | 고정 조건              | 바꾸는 요소                    | 확인 질문                             |
+| ---- | ---------------------- | ------------------------------ | ------------------------------------- |
+| A    | 3B, 200개, 기존 추론   | full loss → answer-target loss | loss masking만으로 얼마나 오르는가?   |
+| B    | 3B, answer-target loss | 200개 → 전체 train             | 데이터 양의 효과는?                   |
+| C    | 전체 train, 동일 추론  | 3B 4-bit → 9B BF16             | 모델/정밀도 효과는?                   |
+| D    | 동일 model/adapter     | generate → candidate score     | 파싱 제거 효과는?                     |
+| E    | 동일 설정              | image token 256/512/768/1024   | OCR 성능과 비용의 최적점은?           |
+| F    | 동일 설정              | permutation 1/2/4회            | 위치 편향 감소가 비용을 정당화하는가? |
+| G    | seed 17/42/71          | 동일 hyperparameter            | 개선이 seed에 안정적인가?             |
 
 각 run에서 최소한 다음을 저장한다.
 
@@ -618,15 +618,15 @@ d  ██          -2.70
 
 ## 부록 A. 분석 근거 위치
 
-| 근거 | 기존 notebook | 개선 notebook |
-|---|---|---|
-| 데이터 제한·로드 | `라이브러리, 데이터, 설정` 코드 셀 | `데이터 로드와 PRECHECK` 코드 셀 |
-| 모델·LoRA | `모델, Processor` 코드 셀 | `모델/LoRA 로드와 구조 검사` 코드 셀 |
-| prompt·dataset | `프롬프트 템플릿`, `Custom Dataset, Collator` | `공통 prompt와 데이터셋` |
-| split | `DataLoader` 코드 셀 | `데이터 감사와 leakage-safe split` |
-| 학습 | `fine-tuning` 코드 셀 | `학습, checkpoint, 재개` |
-| 추론 | `inference` 코드 셀 | `후보 log-probability 추론`, `test 추론` |
-| 제출 | `inference` 마지막 부분 | `score ensemble과 최종 제출 검증` |
+| 근거             | 기존 notebook                                 | 개선 notebook                            |
+| ---------------- | --------------------------------------------- | ---------------------------------------- |
+| 데이터 제한·로드 | `라이브러리, 데이터, 설정` 코드 셀            | `데이터 로드와 PRECHECK` 코드 셀         |
+| 모델·LoRA        | `모델, Processor` 코드 셀                     | `모델/LoRA 로드와 구조 검사` 코드 셀     |
+| prompt·dataset   | `프롬프트 템플릿`, `Custom Dataset, Collator` | `공통 prompt와 데이터셋`                 |
+| split            | `DataLoader` 코드 셀                          | `데이터 감사와 leakage-safe split`       |
+| 학습             | `fine-tuning` 코드 셀                         | `학습, checkpoint, 재개`                 |
+| 추론             | `inference` 코드 셀                           | `후보 log-probability 추론`, `test 추론` |
+| 제출             | `inference` 마지막 부분                       | `score ensemble과 최종 제출 검증`        |
 
 ## 부록 B. 분석 범위
 
