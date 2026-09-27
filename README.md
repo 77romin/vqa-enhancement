@@ -23,21 +23,9 @@
 
 ## 모델 구조 시각화
 
-**전체 VQA 처리 흐름과 인코더·교차 어텐션 구조**
-
-![VQA 모델의 전체 처리 흐름과 비전·텍스트 인코더 및 교차 어텐션 구조](docs/images/vqa-architecture-overview.png)
-
-**데이터 파이프라인·학습 목표·추론 및 어텐션 시각화**
+아래 그림은 데이터 전처리부터 멀티모달 특징 융합, 학습 목표, 정답 예측과 어텐션 시각화까지 VQA 파이프라인의 전체 흐름을 보여준다.
 
 ![VQA 모델의 데이터 파이프라인, 학습 목표, 추론 및 어텐션 시각화](docs/images/vqa-architecture-data-pipeline.png)
-
-**블록 융합 기반 멀티모달 아키텍처**
-
-![블록 융합을 사용하는 VQA 멀티모달 아키텍처와 예측 결과](docs/images/vqa-architecture-block-fusion.png)
-
-**특징 추출·어텐션·정답 생성 상세 흐름**
-
-![VQA 모델의 시각 및 텍스트 특징 추출, 어텐션, 정답 생성 상세 흐름](docs/images/vqa-architecture-attention.png)
 
 ### 해석 시 주의
 
