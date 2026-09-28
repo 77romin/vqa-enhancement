@@ -5,6 +5,22 @@
 
 ---
 
+<!-- provlem_solve/{일자}/{스터디멤버 깃헙 id} 형태로 파일을 생성할 때 사용됩니다.  -->
+## Team
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/Nerororo"><img src="https://avatars.githubusercontent.com/Nerororo" width="150px;" alt="mojunsul"></a></td>
+    <td align="center"><a href="https://github.com/NewOld21"><img src="https://avatars.githubusercontent.com/NewOld21" width="150px;" alt="mojunsul"></a></td>
+    <td align="center"><a href="https://github.com/77romin"><img src="https://avatars.githubusercontent.com/77romin" width="150px;" alt="mojunsul"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/Nerororo"><b>김동준</b></a></td>
+    <td align="center"><a href="https://github.com/NewOld21"><b>김세헌</b></a></td>
+    <td align="center"><a href="https://github.com/77romin"><b>김강민</b></a></td>
+  </tr>
+  
+</table>
+
 ## 1. Executive Summary
 
 개선 버전은 단순히 모델 크기만 키운 코드가 아니다. **데이터 신뢰성 → 학습 목표 → 모델 용량과 시각 해상도 → 추론 의사결정 → 제출 안정성**을 한 흐름으로 다시 설계했다.
